@@ -1,0 +1,492 @@
+/*
+Deterministic simulator for zebrafish segmentation
+Copyright (C) 2012 Ahmet Ay, Jack Holland, Adriana Sperlea
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <iostream>
+#include <sstream>
+
+#include "sim.h"
+#include "init.h"
+#include "feats.h"
+#include "file-io.h"
+#include "macros.h"
+#include "debug.h"
+
+using namespace std;
+
+extern terminal* term;
+
+void simulate_all_params (input_params& ip, rates& rs, rate_positions& rps, sim_data& sd, input_file_data& params_data, mutant_data mds[], ofstream* file_passed, char** filenames_cons, ofstream* file_features) {
+	for (int i = 0; i < ip.num_pars; i += chunk_size) {
+		int num_runs = ip.num_pars - i > chunk_size ? chunk_size : ip.num_pars - i;
+		for (int j = 0; j < num_runs; j++) {
+			store_rates(rs, params_data, ip.seed);
+			adjust_rates_per_cell(rs, rps, sd);
+			simulate_param_set(i * chunk_size + j, ip, rs, rps, sd, params_data, mds, file_passed, filenames_cons, file_features);
+		}
+		cout << term->blue << "Done with " << term->reset << num_runs << " parameter sets" << endl;
+	}
+}
+
+void simulate_param_set (int set_num, input_params& ip, rates& rs, rate_positions& rps, sim_data& sd, input_file_data& params_data, mutant_data mds[], ofstream* file_passed, char** filenames_cons, ofstream* file_features) {
+	cout << term->blue << "Simulating set " << term->reset << set_num << " . . ." << endl;
+	features feat_wildtype, feat_delta, feat_her13, feat_her1, feat_her7, feat_her7her13;
+	double temp_rv1;
+	double temp_rv2;
+	
+	/* 
+	 For the wild type and every mutant, perform the following steps:
+	 1) Adjust the appropriate protein synthesis rates to create mutants if necessary
+	 2) Run the simulation
+	 3) Go to the next parameter set if the propensities for the current one have gone above the set threshold
+	 4) Otherwise, test oscillation features
+	 5) Go to the next parameter set if the current one did not produce oscillations or did not satisfy the mutant conditions
+	*/
+	
+	if (!run_sim(set_num, sd, rs, feat_wildtype, feat_wildtype, mds, mutant_wildtype, ip.print_cons, filenames_cons[0], ip.print_gran)) {
+		return;
+	}
+	
+	temp_rv1 = rs.rate[PSDELTA];
+	rs.rate[PSDELTA] = 0.0;
+	if (!run_sim(set_num, sd, rs, feat_delta, feat_wildtype, mds, mutant_delta, ip.print_cons, filenames_cons[1], ip.print_gran)) {
+		return;
+	}
+	rs.rate[PSDELTA] = temp_rv1;
+	
+	temp_rv1 = rs.rate[PSH13];
+	rs.rate[PSH13] = 0.0;
+	if (!run_sim(set_num, sd, rs, feat_her13, feat_wildtype, mds, mutant_her13, ip.print_cons, filenames_cons[2], ip.print_gran)) {
+		return;
+	}
+	rs.rate[PSH13] = temp_rv1;
+	
+	temp_rv1 = rs.rate[PSH1];
+	rs.rate[PSH1] = 0.0;
+	if (!run_sim(set_num, sd, rs, feat_her1, feat_wildtype, mds, mutant_her1, ip.print_cons, filenames_cons[3], ip.print_gran)) {
+		return;
+	}
+	rs.rate[PSH1] = temp_rv1;
+	
+	temp_rv1 = rs.rate[PSH7];
+	rs.rate[PSH7] = 0.0;
+	if (!run_sim(set_num, sd, rs, feat_her7, feat_wildtype, mds, mutant_her7, ip.print_cons, filenames_cons[4], ip.print_gran)) {
+		return;
+	}
+	rs.rate[PSH7] = temp_rv1;
+	
+	temp_rv1 = rs.rate[PSH7];
+	temp_rv2 = rs.rate[PSH13];
+	rs.rate[PSH7] = 0.0;
+	rs.rate[PSH13] = 0.0;
+	if (!run_sim(set_num, sd, rs, feat_her7her13, feat_wildtype, mds, mutant_her7her13, ip.print_cons, filenames_cons[5], ip.print_gran)) {
+		return;
+	}
+	rs.rate[PSH7] = temp_rv1;
+	rs.rate[PSH13] = temp_rv2;
+	
+	/*
+	 If the paramater set created oscillatory behavior in wild type and all the mutant conditions were satisfied:
+	 1) Print the appropriate message
+	 2) Print the oscillation features into the appropriate files
+	 2) Print the parameter set into the output file containing parameter that passed the conditions.
+	*/
+	
+	cout << term->blue << "Parameter set " << term->reset << set_num << term->blue << " passed" << term->reset << endl;
+	if (ip.print_features) {
+		string run_num_str;
+		ostringstream run_num_ss;
+		run_num_ss << set_num;
+		run_num_str = run_num_ss.str();
+		*file_features << run_num_str << ",";
+		print_osc_features(file_features, &feat_wildtype);
+		print_osc_features(file_features, &feat_delta);
+		print_osc_features(file_features, &feat_her13);
+		print_osc_features(file_features, &feat_her1);
+		print_osc_features(file_features, &feat_her7);
+		print_osc_features(file_features, &feat_her7her13);
+	}
+	
+	print_passed(file_passed, rs);
+}
+
+bool run_sim (int set_num, sim_data& sd, rates& rs, features& feat, features& wtfeat, mutant_data mds[], int mutant, bool print_cons, char* filename_cons, int print_gran) {
+	con_levels cl(sd.time_steps, sd.cells_total);
+	bool passed = model(sd, rs, cl);
+	osc_features(sd, cl, feat, mutant == mutant_wildtype);
+	if (print_cons) {
+		print_concentrations(set_num, filename_cons, print_gran, sd, cl);
+	}
+	if (passed) {
+		if (mds[mutant].test(feat, wtfeat)) {
+			cout << "  " << mds[mutant].name << " passed" << endl;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool model (sim_data& sd, rates& rs, con_levels& cl) {
+	/*
+	 Runs the deterministic simulation of the model.
+	 For each time step:
+	 1) Iterate through every cell (50 cells in this case) and update the concentrations of proteins and mRNA.
+		These concentration values are obtained by solving the differential equations for that time step, using Euler's method.
+	 2) Check that the concentrations do not become negative -- a negative amount of protein is not biologically sensible
+	 3) Check that the propensity functions do not go above the set threshold -- if one was specified.
+	*/
+	
+	// Convert the time delay values to integers, because the deterministic simulation uses discrete time points.
+	int mdelays[size_indices];
+	int pdelays[size_indices];
+	for (int i = 0; i < size_indices; i++) {
+		mdelays[_mh1 + i] = int(rs.rate[DELAYMH1 + i] / sd.step_size);
+		pdelays[_ph1 + i] = int(rs.rate[DELAYPH1 + i] / sd.step_size);
+	}
+	
+	double time_elapsed = 0;
+	int last_split = 0;
+	
+	for (int j = 1; j < sd.time_steps; j++) {
+		bool div = false;
+		time_elapsed += sd.step_size;
+		if (time_elapsed >= sd.time_total - sd.step_size) {
+			split(sd, cl, j);
+			time_elapsed = 0;
+			last_split = j;
+			div = true;
+		}
+		
+		record_psm_positions(sd, j);
+		
+		for (int k = 0; k < sd.cells_total; k++) {
+			int time_prev = j - 1;
+			int cell_prev;
+			if (div) {
+				cell_prev = (k - 1 + sd.cells_total) % sd.cells_total;
+			} else {
+				cell_prev = k;
+			}
+			st_context stc(time_prev, j, cell_prev, k);
+			int split_diff = j - last_split;
+			
+			int mdelays_cell[size_indices];
+			int pdelays_cell[size_indices];
+			for (int l = 0; l < size_indices; l++) {
+				mdelays_cell[_mh1 + l] = index_with_splits(mdelays[_mh1 + l], k, sd.cells_total, sd.time_steps, split_diff);
+				pdelays_cell[_ph1 + l] = index_with_splits(pdelays[_ph1 + l], k, sd.cells_total, sd.time_steps, split_diff);
+			}
+			
+			protein_synthesis(sd, rs, cl, stc, pdelays, pdelays_cell);
+			if (any_less_0(cl, k, j, ph1, pmesp)) {
+				return false;
+			}
+			
+			dimer_proteins(sd, rs, cl, stc);
+			if (any_less_0(cl, k, j, ph1h1, ph15h15)) {
+				return false;
+			}
+			
+			mRNA_synthesis(sd, rs, cl, stc, mdelays, mdelays_cell, pdelays_cell);
+			if (any_less_0(cl, k, j, mh1, mmesp)) {
+				return false;
+			}
+			
+			if (sd.max_prop_thresh != INFINITY && !check_propensities(cl, rs, j, sd.max_prop_thresh)) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
+}
+
+bool any_less_0 (con_levels& cl, int cell, int time, int start, int end) {
+	for (int i = start; i <= end; i++) {
+		if (cl.c[i][time][cell] < 0) {
+			cerr << "time: " << time << endl;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool check_propensities (con_levels& cl, rates& rs, int time, double max_prop_thresh) {
+	int i, j;
+	for (i = PSH1, j = mh1; i <= MDDELTA && j <= mdelta; i++, j++) {
+		if (rs.rate[i] * cl.c[j][time][0] > max_prop_thresh) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void split (sim_data& sd, con_levels& cl, int n) {
+	int next_active_start = (sd.active_start + 1) % sd.width_total;
+	int active_start = sd.active_start;
+	for (int i = 0; i < size_con_levels; i++) {
+		cl.c[i][n][next_active_start] = cl.c[i][n][active_start];
+	}
+	
+	sd.active_start = next_active_start;
+	sd.active_thresh = (sd.active_thresh + 1) % sd.width_total;
+	sd.active_end = (sd.active_end + 1) % sd.width_total;
+}
+
+inline void record_psm_positions (sim_data& sd, int time) {
+	sd.active_end_record[time] = sd.active_end;
+	sd.active_start_record[time]= sd.active_start;
+	sd.active_thresh_record[time] = sd.active_thresh;
+}
+
+void protein_synthesis (sim_data& sd, rates& rs, con_levels& cl, st_context& stc, int pdelays[], int pdelays_cell[]) {
+	double dimer_effects[size_her_indices] = {0};
+	di_args dia(rs, cl, stc, dimer_effects);
+	cp_args cpa(sd, rs, cl, stc, pdelays, pdelays_cell, dimer_effects);
+	
+	// Her1
+	dim_int(dia, di_indices(ph1, ph7,  ph1h7,  DAH1H7,  DDIH1H7,  _h1));
+	dim_int(dia, di_indices(ph1, ph11, ph1h11, DAH1H11, DDIH1H11, _h1));
+	dim_int(dia, di_indices(ph1, ph12, ph1h12, DAH1H12, DDIH1H12, _h1));
+	dim_int(dia, di_indices(ph1, ph13, ph1h13, DAH1H13, DDIH1H13, _h1));
+	dim_int(dia, di_indices(ph1, ph15, ph1h15, DAH1H15, DDIH1H15, _h1));
+	con_protein_her(cpa, cph_indices(mh1, ph1, ph1h1, PSH1, PDH1, DAH1H1, DDIH1H1, _ph1, _h1));
+	
+	// Her7
+	dim_int(dia, di_indices(ph7, ph1,  ph1h7,  DAH1H7,  DDIH1H7,  _h7));
+	dim_int(dia, di_indices(ph7, ph11, ph7h11, DAH7H11, DDIH7H11, _h7));
+	dim_int(dia, di_indices(ph7, ph12, ph7h12, DAH7H12, DDIH7H12, _h7));
+	dim_int(dia, di_indices(ph7, ph13, ph7h13, DAH7H13, DDIH7H13, _h7));
+	dim_int(dia, di_indices(ph7, ph15, ph7h15, DAH7H15, DDIH7H15, _h7));
+	con_protein_her(cpa, cph_indices(mh7, ph7, ph7h7, PSH7, PDH7, DAH7H7, DDIH7H7, _ph7, _h7));
+	
+	// Her11
+	dim_int(dia, di_indices(ph11, ph1,  ph1h11,  DAH1H11,  DDIH1H11,  _h11));
+	dim_int(dia, di_indices(ph11, ph7,  ph7h11,  DAH7H11,  DDIH7H11,  _h11));
+	dim_int(dia, di_indices(ph11, ph12, ph11h12, DAH11H12, DDIH11H12, _h11));
+	dim_int(dia, di_indices(ph11, ph13, ph11h13, DAH11H13, DDIH11H13, _h11));
+	dim_int(dia, di_indices(ph11, ph15, ph11h15, DAH11H15, DDIH11H15, _h11));
+	con_protein_her(cpa, cph_indices(mh11, ph11, ph11h11, PSH11, PDH11, DAH11H11, DDIH11H11, _ph11, _h11));
+	
+	// Her12
+	dim_int(dia, di_indices(ph12, ph1,  ph1h12,  DAH1H12,  DDIH1H12,  _h12));
+	dim_int(dia, di_indices(ph12, ph7,  ph7h12,  DAH7H12,  DDIH7H12,  _h12));
+	dim_int(dia, di_indices(ph12, ph11, ph11h12, DAH11H12, DDIH11H12, _h12));
+	dim_int(dia, di_indices(ph12, ph13, ph12h13, DAH12H13, DDIH12H13, _h12));
+	dim_int(dia, di_indices(ph12, ph15, ph12h15, DAH12H15, DDIH12H15, _h12));
+	con_protein_her(cpa, cph_indices(mh12, ph12, ph12h12, PSH12, PDH12, DAH12H12, DDIH12H12, _ph12, _h12));
+	
+	// Her13
+	dim_int(dia, di_indices(ph13, ph1,  ph1h13,  DAH1H13,  DDIH1H13,  _h13));
+	dim_int(dia, di_indices(ph13, ph7,  ph7h13,  DAH7H13,  DDIH7H13,  _h13));
+	dim_int(dia, di_indices(ph13, ph11, ph11h13, DAH11H13, DDIH11H13, _h13));
+	dim_int(dia, di_indices(ph13, ph12, ph12h13, DAH12H13, DDIH12H13, _h13));
+	dim_int(dia, di_indices(ph13, ph15, ph13h15, DAH13H15, DDIH13H15, _h13));
+	con_protein_her(cpa, cph_indices(mh13, ph13, ph13h13, PSH13, PDH13, DAH13H13, DDIH13H13, _ph13, _h13));
+	
+	// Her15
+	dim_int(dia, di_indices(ph15, ph1,  ph1h15,  DAH1H15,  DDIH1H15,  _h15));
+	dim_int(dia, di_indices(ph15, ph7,  ph7h15,  DAH7H15,  DDIH7H15,  _h15));
+	dim_int(dia, di_indices(ph15, ph11, ph11h15, DAH11H15, DDIH11H15, _h15));
+	dim_int(dia, di_indices(ph15, ph12, ph12h15, DAH12H15, DDIH12H15, _h15));
+	dim_int(dia, di_indices(ph15, ph13, ph13h15, DAH13H15, DDIH13H15, _h15));
+	con_protein_her(cpa, cph_indices(mh1, ph15, ph15h15, PSH15, PDH15, DAH15H15, DDIH15H15, _ph15, _h15));
+	
+	// Delta
+	con_protein_dm(cpa, cpd_indices(mdelta, pdelta, PSDELTA, PDDELTA, _pdelta));
+	
+	// Mesp
+	con_protein_dm(cpa, cpd_indices(mmesp, pmesp, PSMESP, PDMESP, _pmesp));
+}
+
+void dimer_proteins (sim_data& sd, rates& rs, con_levels& cl, st_context& stc) {
+	cd_args cda(sd, rs, cl, stc);
+	
+	for (int i = ph1h1,   j = 0;   i <= ph1h15;  i++, j++) {
+		con_dimer(cda, i, j, cd_indices(ph1, DAH1H1, DDIH1H1, DDGH1H1));
+	}
+	for (int i = ph7h7,   j = 0;   i <= ph7h15;  i++, j++) {
+		con_dimer(cda, i, j, cd_indices(ph7, DAH7H7, DDIH7H7, DDGH7H7));
+	}
+	for (int i = ph11h11, j = 0; i <= ph11h15;   i++, j++) {
+		con_dimer(cda, i, j, cd_indices(ph11, DAH11H11, DDIH11H11, DDGH11H11));
+	}
+	for (int i = ph12h12, j = 0; i <= ph12h15;   i++, j++) {
+		con_dimer(cda, i, j, cd_indices(ph12, DAH12H12, DDIH12H12, DDGH12H12));
+	}
+	for (int i = ph13h13, j = 0; i <= ph13h15;   i++, j++) {
+		con_dimer(cda, i, j, cd_indices(ph13, DAH13H13, DDIH13H13, DDGH13H13));
+	}
+	con_dimer(cda, ph15h15, 0, cd_indices(ph15, DAH15H15, DDIH15H15, DDGH15H15));
+}
+
+void mRNA_synthesis (sim_data& sd, rates& rs, con_levels& cl, st_context& stc, int mdelays[], int mdelays_cell[], int pdelays_cell[]) {
+	/*
+	 Compute the value of the delta protein coming from the neighbors for each cell. In two-cell systems, both cells are neighbors of each other. Chains wrap horizontally and hexagonal
+	 tissue grids wrap horizontally and vertically like a honeycomb.
+	 Two-cell systems look like this:
+	  ___  ___
+	 /   \/   \				where 1 and 2 are neighbors of each other
+	 | 1 || 2 |
+	 \___/\___/
+	 
+	 Chains of cells look like this:
+	  ___  ___  ___  ___
+	 /   \/   \/   \/   \	where x has neighbors n
+	 | n || x || n ||   |
+	 \___/\___/\___/\___/
+	 
+	 Tissues of cells look like this:
+	  ___  ___  ___  ___
+	 /   \/   \/   \/   \	where x has neighbors n
+	 |   || n || n ||   |
+	 \___/\___/\___/\___/_
+	   /   \/   \/   \/   \
+	   | n || x || n ||   |
+	  _\___/\___/\___/\___/
+	 /   \/   \/   \/   \
+	 |   || n || n ||   |
+	 \___/\___/\___/\___/_
+	   /   \/   \/   \/   \
+	   |   ||   ||   ||   |
+	   \___/\___/\___/\___/
+	*/
+	
+	double avg_pdelays[size_indices];
+	if (sd.height == 1) {
+		int mdelays_near[size_indices][2];
+		for (int j = 0; j < size_indices; j++) {
+			neighbors_1d(sd, mdelays_near[_mh1 + j], mdelays_cell[_mh1 + j]);
+		}
+		
+		int left, right;
+		if (stc.cell_cur == sd.active_start) {
+			left = 0;
+			right = 0;
+		} else if (stc.cell_cur == sd.active_end) {
+			left = 1;
+			right = 1;
+		} else {
+			left = 0;
+			right = 1;
+		}
+		
+		for (int j = 0; j < size_indices; j++) {
+			avg_pdelays[_ph1 + j] = average_1d(cl, stc.time_cur - mdelays[_mh1 + j], mdelays_near[_mh1 + j], left, right);
+		}
+	} else {
+		int mdelays_near[size_indices][6];
+		for (int j = 0; j < size_indices; j++) {
+			neighbors_2d(sd, mdelays_near[_mh1 + j], mdelays_cell[_mh1 + j], stc.cell_cur);
+		}
+		
+		int ntop, nbot, ntl, nbl, ntr, nbr;
+		ntop = 0;
+		nbot = 1;
+		if (stc.cell_cur == sd.active_start) {
+			ntl = 2;
+			nbl = 3;
+			ntr = 2;
+			nbr = 3;
+		} else if (stc.cell_cur == sd.active_end) {
+			ntl = 4;
+			nbl = 5;
+			ntr = 4;
+			nbr = 5;
+		} else {
+			ntl = 2;
+			nbl = 3;
+			ntr = 4;
+			nbr = 5;
+		}
+		
+		for (int j = 0; j < size_indices; j++) {
+			avg_pdelays[_ph1 + j] = average_2d(cl, mdelays_near[_mh1 + j], stc.time_cur - mdelays[_mh1 + j], ntop, nbot, ntl, nbl, ntr, nbr);
+		}
+	}
+	
+	//cl.c[msh11][i][n] = change_by_position(g, i, rs.rate[MSH11], 0, 1, false, 0);
+	//cl.c[msh12][i][n] = change_by_position(g, i, rs.rate[MSH12], 1, 1, false, 0);
+	//cl.c[msh13][i][n] = change_by_position(g, i, rs.rate[MSH13], 1, 0, true, 0);
+	//cl.c[msh15][i][n] = change_by_position(g, i, rs.rate[MSH15], 1, 1, false, 0);
+	//cl.c[msmesp][i][n] = change_by_position(g, i, rs.rate[MSMESP], 0, 1, false, 0);
+
+	double mtrans[size_indices];
+	for (int j = 0; j < size_indices; j++) {
+		if (j == _mh13) {
+			mtrans[_mh13] = rs.rate[MSH13];
+		} else {
+			mtrans[_mh1 + j] = transcription(rs, cl, stc.time_cur - mdelays[_mh1 + j], mdelays_cell[_mh1 + j], avg_pdelays[_ph1 + j], rs.rate[MSH1 + j], j);
+		}
+		cl.c[mh1 + j][stc.time_cur][stc.cell_cur] =
+			cl.c[mh1 + j][stc.time_prev][stc.cell_prev]
+			+ sd.step_size * (mtrans[_mh1 + j] - rs.rate[MDH1 + j] * cl.c[mh1 + j][stc.time_prev][stc.cell_prev]);
+	}
+}
+
+void neighbors_1d (sim_data& sd, int mdelay_near[], int mdelay_cell) {
+	mdelay_near[0] = (mdelay_cell - 1 + sd.cells_total) % sd.cells_total;
+	mdelay_near[1] = (mdelay_cell + 1) % sd.cells_total;
+}
+
+void neighbors_2d (sim_data& sd, int mdelay_near[], int mdelay_cell, int cell) {
+	int width = sd.width_total;
+	int not_ae = width * (mdelay_cell % width == sd.active_end);
+	int not_as = width * (mdelay_cell % width == sd.active_start);
+	
+	if ((cell / width) % 2 == 0) {
+		mdelay_near[0] = mdelay_cell - width + not_ae - 1;
+		mdelay_near[1] = mdelay_cell - width;
+		mdelay_near[2] = mdelay_cell + not_ae - 1;
+		mdelay_near[3] = mdelay_cell + not_as + 1;
+		mdelay_near[4] = mdelay_cell + width + not_ae - 1;
+		mdelay_near[5] = mdelay_cell + width;
+	} else {
+		mdelay_near[0] = mdelay_cell - width;
+		mdelay_near[1] = mdelay_cell + not_ae - 1;
+		mdelay_near[2] = mdelay_cell + not_as + 1;
+		mdelay_near[3] = mdelay_cell + width + not_ae - 1;
+		mdelay_near[4] = mdelay_cell + width;
+		mdelay_near[5] = mdelay_cell + width + not_as + 1;
+	}
+	
+	for (int k = 0; k < 6; k++) {
+		mdelay_near[k] = (mdelay_near[k] + sd.cells_total) % sd.cells_total;
+	}
+}
+
+double transcription (rates& rs, con_levels& cl, int time, int cell, double avgpd, double ms, int mrna) {
+	if (time > 0) {
+		double th1h1, th7h13, th11h11, th12h12, th12h13, th13h15, th15h15, tdelta;
+		th1h1 = zero_if_nan(cl.c[ph1h1][time][cell] / rs.rate[CRITPH1H1]);
+		th7h13 = zero_if_nan(cl.c[ph7h13][time][cell] / rs.rate[CRITPH7H13]);
+		th11h11 = zero_if_nan(cl.c[ph11h11][time][cell] / rs.rate[CRITPH11H11]);
+		th12h12 = zero_if_nan(cl.c[ph12h12][time][cell] / rs.rate[CRITPH12H12]);
+		th12h13 = zero_if_nan(cl.c[ph12h13][time][cell] / rs.rate[CRITPH12H13]);
+		th13h15 = zero_if_nan(cl.c[ph13h15][time][cell] / rs.rate[CRITPH13H15]);
+		th15h15 = zero_if_nan(cl.c[ph15h15][time][cell] / rs.rate[CRITPH15H15]);
+		if (mrna >= mh1 && mrna <= mh15) {
+			tdelta = zero_if_nan(avgpd / rs.rate[CRITPDELTA]);
+		} else {
+			tdelta = 0;
+		}
+		return ms * ((1 + tdelta) / (1 + tdelta + square(th1h1) + square(th7h13) + square(th11h11) + square(th12h12) + square(th12h13) + square(th13h15) + square(th15h15)));
+	} else {
+		return ms;
+	}
+}
+

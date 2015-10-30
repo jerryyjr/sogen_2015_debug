@@ -1,0 +1,348 @@
+/*
+Deterministic simulator for zebrafish segmentation
+Copyright (C) 2012 Ahmet Ay, Jack Holland, Adriana Sperlea
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <unistd.h>
+
+#include "init.h"
+#include "main.h"
+#include "sim.h"
+#include "feats.h"
+#include "file-io.h"
+#include "macros.h"
+#include "structs.h"
+
+using namespace std;
+
+terminal* term;
+
+void init_terminal () {
+	term = new terminal();
+	if (term->blue == NULL || term->red == NULL || term->reset == NULL) {
+		term->no_memory();
+		exit(1);
+	}
+	strcpy(term->blue, term->code_blue);
+	strcpy(term->red, term->code_red);
+	strcpy(term->reset, term->code_reset);
+}
+
+void free_terminal () {
+	delete term;
+}
+
+void accept_params (int num_args, char** args, input_params& ip) {
+	if (num_args > 1) { // if arguments were given and each argument option is followed by a value
+		for (int i = 1; i < num_args; i += 2) { // iterate through each argument pair
+			char* option = args[i];
+			char* value;
+			if (i < num_args - 1) {
+				value = args[i + 1];
+			} else {
+				value = NULL;
+			}
+			
+			/*
+			Check for each possible argument option and overrides the default value for each specified option. If the option isn't recognized or the value given for an option doesn't appear valid then the usage information for the program is printed with an error message and no simulations are run. The code should be fairly self-explanatory with a few exceptions:
+			1) atoi converts a string to an integer, atof converts a string to a floating point number (i.e. rational)
+			2) strings should always be compared using strcmp, not ==, and strcmp returns 0 if the two strings match
+			3) usage(true) prints the usage information with an error message while usage(false) prints it without one
+			*/
+			
+			if (strcmp(option, "-i") == 0 || strcmp(option, "--input-file") == 0) {
+				ensure_nonempty(option, value);
+				store_filename(&(ip.input_file), value);
+			} else if (strcmp(option, "-o") == 0 || strcmp(option, "--output-file") == 0) {
+				ensure_nonempty(option, value);
+				store_filename(&(ip.passed_file), value);
+			} else if (strcmp(option, "-t") == 0 || strcmp(option, "--print-concentrations") == 0) {
+				ensure_nonempty(option, value);
+				ip.print_cons = true;
+				store_filename(&(ip.cons_path), value);
+			} else if (strcmp(option, "-g") == 0 || strcmp(option, "--print-granularity") == 0) {
+				ensure_nonempty(option, value);
+				ip.print_gran = atoi(value);
+				if (ip.print_gran < 1) {
+					usage("The granularity to print with must be at least one time step");
+				}
+			} else if (strcmp(option, "-f") == 0 || strcmp(option, "--print-osc-features") == 0) {
+				ensure_nonempty(option, value);
+				ip.print_features = true;
+				store_filename(&(ip.features_file), value);
+			} else if (strcmp(option, "-s") == 0 || strcmp(option, "--seed") == 0) {
+				ensure_nonempty(option, value);
+				ip.seed = atof(value);
+				if (ip.seed <= 0) {
+					usage("The seed to generate random numbers must be a positive integer. Set -s or --seed to at least 1.");
+				}
+			} else if (strcmp(option, "-p") == 0 || strcmp(option, "--parameters") == 0) {
+				ensure_nonempty(option, value);
+				ip.num_pars = atoi(value);
+				if (ip.num_pars < 1) {
+					usage("The number of parameteres to generate must be a positive integer. Set -p or --parameters to at least 1.");
+				}
+			} else if (strcmp(option, "-P") == 0 || strcmp(option, "--positional-parameters") == 0) {
+				ensure_nonempty(option, value);
+				ip.pos_params = true;
+				store_filename(&(ip.pos_params_file), value);
+			} else if (strcmp(option, "-m") == 0 || strcmp(option, "--minutes") == 0) {
+				ensure_nonempty(option, value);
+				ip.minutes = atoi(value);
+				if (ip.minutes < 1) {
+					usage("The simulation must be run for at least one minute. Set -m or --minutes to at least 1.");
+				}
+			} else if (strcmp(option, "-S") == 0 || strcmp(option, "--time-step") == 0) {
+				ensure_nonempty(option, value);
+				ip.step_size = atof(value);
+				if (ip.step_size <= 0) {
+					usage("The time step for Euler's method must be a positive real number. Set -S or --time-step to be greater than 0.");
+				}
+			} else if (strcmp(option, "-a") == 0 || strcmp(option, "--max-prop-threshold") == 0) {
+				ensure_nonempty(option, value);
+				ip.max_prop_thresh = atof(value);
+				if (ip.max_prop_thresh == 0) {
+					usage("The propensities threshold must be a positive real number. Set -a or --max-prop-threshold to be greater than 0.");
+				}
+			} else if (strcmp(option, "-x") == 0 || strcmp(option, "--posterior-width") == 0) {
+				ensure_nonempty(option, value);
+				ip.width_post = atoi(value);
+				if (ip.width_post < 1) {
+					usage("The posterior's width must be at least two cells. Set -x or --posterior-width to at least 2.");
+				}
+			} else if (strcmp(option, "-y") == 0 || strcmp(option, "--height") == 0) {
+				ensure_nonempty(option, value);
+				ip.height = atoi(value);
+				if (ip.height < 1) {
+					usage("The tissue height must be at least one cell. Set -y or --height to at least 1.");
+				}
+			} else if (strcmp(option, "-w") == 0 || strcmp(option, "--threshold-width") == 0) {
+				ensure_nonempty(option, value);
+				ip.width_thresh = atoi(value);
+				if (ip.width_thresh < 1) {
+					usage("The threshold width must be at least one cell. Set -w or --threshold-width to at least 1.");
+				}
+			} else if (strcmp(option, "-n") == 0 || strcmp(option, "--active-anterior") == 0) {
+				ensure_nonempty(option, value);
+				ip.width_ant = atoi(value);
+				if (ip.width_ant < 0) {
+					usage("The active anterior's width must be at least zero cells. Set -n or --anterior-width to at least 0.");
+				}
+			} else if (strcmp(option, "-c") == 0 || strcmp(option, "--no-color") == 0) {
+				strcpy(term->blue, "");
+				strcpy(term->red, "");
+				strcpy(term->reset, "");
+				i--;
+			} else if (strcmp(option, "-q") == 0 || strcmp(option, "--quiet") == 0) {
+				ofstream nullout("/dev/null");
+				cout.rdbuf(nullout.rdbuf());
+				i--;
+			} else if (strcmp(option, "-h") == 0 || strcmp(option, "--help") == 0) {
+				usage("");
+				i--;
+			} else if (strcmp(option, "-l") == 0 || strcmp(option, "--licensing") == 0) { 
+				licensing();
+				i--;
+			}
+		}
+	}
+}
+
+void ensure_nonempty (const char* flag, const char* arg) {
+	if (arg == NULL) {
+		char* message = (char*)malloc(strlen("Missing argument for '' flag.") + strlen(flag) + 1);
+		sprintf(message, "Missing the argument for the '%s' flag.", flag);
+		usage(message);
+	}
+}
+
+void set_default_files (input_params& ip) {
+	if (ip.input_file == NULL) {
+		store_filename(&(ip.input_file), "input.csv");
+	}
+	if (ip.passed_file == NULL) {
+		store_filename(&(ip.passed_file), "passed.txt");
+	}
+	if (ip.print_cons && ip.cons_path == NULL) {
+		store_filename(&(ip.cons_path), "cons");
+	}
+	if (ip.print_features && ip.features_file == NULL) {
+		store_filename(&(ip.features_file), "features.txt");
+	}
+	if (ip.pos_params && ip.pos_params_file == NULL) {
+		store_filename(&(ip.pos_params_file), "pos_params.csv");
+	}
+}
+
+void check_sim_size (input_params& ip) {
+	if ((ip.height == 1 && (ip.width_post + ip.width_thresh + ip.width_ant) < 3) || (ip.height == 2 || ip.height == 3) || (ip.height > 3 && ((ip.width_post + ip.width_thresh + ip.width_ant) < 4 || ip.height % 2 == 1 || (ip.width_post + ip.width_thresh + ip.width_ant) % 2 == 1))) {
+		usage("Invalid simulation size. For chains, sum of widths >= 3, height = 1. For tissues, sum of widths >= 4 and even, height >= 4 and even.");
+	}
+}
+
+void init_seed (input_params& ip) {
+	ip.seed = abs(((ip.seed * 181) * ((getpid() - 83) * 359)) % 805306457); // the final seed value, calculated using the given seed and the process ID
+	srand(ip.seed);
+}
+
+void read_sim_params (input_params& ip, input_file_data& params_data, input_file_data& pos_params_data) {
+	if (params_data.filename != NULL) {
+		cout << term->blue << "Reading file " << term->reset << params_data.filename << " . . . ";
+		read_file(&params_data);
+		term->done();
+		if (ip.pos_params) {
+			cout << term->blue << "Reading file " << term->reset << pos_params_data.filename << " . . . ";
+			read_file(&pos_params_data);
+			term->done();
+		}
+	}
+}
+
+ofstream* create_passed_file (input_params& ip) {
+	ofstream* file_passed = new ofstream();
+	open_file(file_passed, ip.passed_file);
+	return file_passed;
+}
+
+void delete_passed_file (ofstream* file_passed) {
+	close_if_open(file_passed);
+	delete file_passed;
+}
+
+char** create_cons_filenames (input_params& ip) {
+	char** filenames_cons = (char**)malloc(sizeof(char*) * num_mutants);
+	if (ip.print_cons) {
+		int path_length = strlen(ip.cons_path);
+		if (ip.cons_path[path_length - 1] == '/') {
+			ip.cons_path[--path_length] = '\0';
+		}
+		create_dir(ip.cons_path);
+		
+		char* orig_cons_path = (char*)malloc(sizeof(ip.cons_path) + 1);
+		strcpy(orig_cons_path, ip.cons_path);
+		char* full_cons_path = (char*)malloc(strlen(orig_cons_path) + strlen("/her7her13/") + 1);
+		string mutants[num_mutants] = {"/wt", "/delta", "/her13", "/her1", "/her7", "/her7her13"};
+		for (int i = 0; i < num_mutants; i++) {
+			strcpy(full_cons_path, orig_cons_path);
+			strcat(full_cons_path, mutants[i].c_str());
+			strcat(full_cons_path, "/");
+			filenames_cons[i] = (char*)malloc(strlen(full_cons_path) + 1);
+			strcpy(filenames_cons[i], full_cons_path);
+			create_dir(filenames_cons[i]);
+
+		}
+		free(full_cons_path);
+		free(orig_cons_path);
+	} else {
+		for (int i = 0; i < num_mutants; i++) {
+			filenames_cons[i] = NULL;
+		}
+	}
+	return filenames_cons;
+}
+
+void delete_cons_filenames (char** filenames_cons) {
+	if (filenames_cons != NULL) {
+		for (int i = 0; i < num_mutants; i++) {
+			free(filenames_cons[i]);
+		}
+		free(filenames_cons);
+	}
+}
+
+ofstream* create_features_file (input_params& ip) {
+	ofstream* file_features = new ofstream();
+	if (ip.print_features) {
+		open_file(file_features, ip.features_file);
+		*file_features << "set,per wt,amp wt,peak to trough wt,per delta,amp delta,peak to trough delta,per her1,amp her1,peak to trough her1,per her7,amp her7,peak to trough her7,per her13,amp her13,peak to trough her13,per her713,amp her713,peak to trough her713" << endl;
+	}
+	return file_features;
+}
+
+void delete_features_file (ofstream* file_features) {
+	close_if_open(file_features);
+	delete file_features;
+}
+
+mutant_data* create_mutant_data () {
+	mutant_data* mds = new mutant_data[num_mutants];
+	mds[mutant_wildtype].name = copy_str("wildtype");
+	mds[mutant_wildtype].test = test_wildtype;
+	mds[mutant_delta].name = copy_str("delta mutant");
+	mds[mutant_delta].test = test_delta_mutant;
+	mds[mutant_her13].name = copy_str("her13 mutant");
+	mds[mutant_her13].test = test_h13_mutant;
+	mds[mutant_her1].name = copy_str("her1 mutant");
+	mds[mutant_her1].test = test_h1_mutant;
+	mds[mutant_her7].name = copy_str("her7 mutant");
+	mds[mutant_her7].test = test_h7_mutant;
+	mds[mutant_her7her13].name = copy_str("her7-her13 mutant");
+	mds[mutant_her7her13].test = test_h7h13_mutant;
+	return mds;
+}
+
+void delete_mutant_data (mutant_data mds[]) {
+	delete[] mds;
+}
+
+void adjust_rates_per_cell (rates& rs, rate_positions& rps, sim_data& sd) {
+	for (int i = 0; i < size_rates; i++) {
+		if (rps.adjusted[i]) {
+			for (int j = 0; j < sd.width_total; j++) {
+				double* rate = &(rs.cell_rate[i][j]);
+				int left = 0;
+				int right = sd.width_post - 1;
+				if (rps.num_points[i] == 4) {
+					if (j <= right) {
+						*rate = interpolate(j, left, right, rps.points[i][0], rps.points[i][1]);
+					} else {
+						left = right + 1;
+						right += sd.width_thresh;
+						if (j < right) {
+							*rate = interpolate(j, left, right, rps.points[i][1], rps.points[i][2]);
+						} else {
+							left = right + 1;
+							right += sd.width_ant;
+							*rate = interpolate(j, left, right, rps.points[i][2], rps.points[i][3]);
+						}
+					}
+				} else {
+					*rate = interpolate(j, 0, sd.width_total, rps.points[i][0], rps.points[i][1]);
+				}
+			}
+		}
+	}
+}
+
+void check_num_params_valid (input_params& ip, char* params) {
+	if (params == NULL) {
+		ip.num_pars = 0;
+	} else {
+		int i = 0;
+		int lines = 1;
+		while (params[i] != '\0') {
+			if (params[i] == '\n') {
+				++lines;
+			}
+			++i;
+		}
+		ip.num_pars = min(ip.num_pars, lines);
+	}
+}
+

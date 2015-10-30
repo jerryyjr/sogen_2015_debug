@@ -4,138 +4,138 @@ Zebrafish somitogenesis simulation
 Table of contents
 -----------------
 
-| 0: Compatibility and system requirements  
-|__ 0.0: Tested systems and portability  
-|__ 0.1: MPI dependency  
-|__ 0.2: SCons dependency  
-|__ 0.3: Python and SciPy dependencies  
-|__ 0.4: FFmpeg dependency  
-| 1: Compilation  
-|__ 1.0: Compiling with and without SCons  
-|__ 1.1: Compilation options  
-|__ 1.2: Compiling for MPI  
-|__ 1.3: Random number generation discrepancies  
-| 2: Running simulations  
-|__ 2.0: Biological and computational description of the simulation  
-|__ 2.1: Setting up a simulation  
-|__ 2.2: Input and output  
-|____ 2.2.0: Methods of input  
-|____ 2.2.1: Parameter sets  
-|____ 2.2.2: Perturbations and gradients  
-|____ 2.2.3: Command-line arguments  
-|____ 2.2.4: Input file formats  
-|______ 2.2.4.0: Parameter sets format  
-|______ 2.2.4.1: Perturbations format  
-|______ 2.2.4.2: Gradients format  
-|______ 2.2.4.3: Ranges format  
-|____ 2.2.5: Output file formats  
-|______ 2.2.5.0: Passed sets format  
-|______ 2.2.5.1: Concentrations text format  
-|______ 2.2.5.2: Concentrations binary format  
-|______ 2.2.5.3: Oscillation features format  
-|______ 2.2.5.4: Conditions format  
-|______ 2.2.5.5: Scores format  
-|______ 2.2.5.6: Seeds format  
-|____ 2.2.6: Piping in parameter sets from other applications  
-|____ 2.2.7: Generating random parameter sets  
-|__ 2.3: Modifying the code  
-|____ 2.3.0: Adding command-line arguments  
-|____ 2.3.1: Adding input and output files  
-|______ 2.3.1.0: Input files  
-|______ 2.3.1.1: Output files  
-|____ 2.3.2: Adding mutants  
-|____ 2.3.3: Adding genes  
-|____ 2.3.5: Other modifications  
-| 3: Finding parameter sets with SRES  
-|__ 3.0: How SRES finds parameters  
-|____ 3.0.0: How evolutionary algorithms work  
-|____ 3.0.1: How SRES works  
-|____ 3.0.2: How SRES-gradients works  
-|__ 3.1: Setting up SRES  
-|____ 3.1.0: Searching for parameters  
-|____ 3.1.1: Searching for gradients  
-|____ 3.1.2: Using MPI  
-|__ 3.2: Input and output  
-|____ 3.2.0: Methods of input  
-|____ 3.2.1: Ranges  
-|____ 3.2.2: Simulation calls  
-|____ 3.2.3: Command-line arguments  
-|____ 3.2.4: Input file formats  
-|____ 3.2.5: Output file formats  
-|__ 3.3: Modifying the code  
-|____ 3.3.0: Adding command-line arguments  
-|____ 3.3.1: Changing which arguments SRES sends to simulations  
-|____ 3.3.2: Adding input and output files  
-|____ 3.3.3: Modifying libSRES  
-|____ 3.3.4: Other modifications  
-| 4: Performing sensitivity analysis  
-|__ 4.0: Overview  
-|____ 4.0.0. Overview of Local Sensitivity Analysis  
-|____ 4.0.1. Overview of the program  
-|__ 4.1: Using sensitivity  
-|____ 4.1.0. Command-line arguments  
-|____ 4.1.1: Input file format  
-|____ 4.1.2: Simulation output file format  
-|____ 4.1.3: Sensitivity output file format  
-|____ 4.1.4: Example program call  
-|__ 4.2: Modifying the code  
-|____ 4.2.0: Adding command-line arguments  
-|____ 4.2.1: Modifying the simulation program  
-| 5: Analysis and parsing scripts  
-|__ 5.0: Running simulations over multiple seeds (run-multiple-seeds.py)  
-|____ 5.0.0: Overview  
-|____ 5.0.1: Command-line arguments  
-|____ 5.0.2: Example program calls  
-|__ 5.1: Checking robustness (check-robustness.py)  
-|____ 5.1.0: Overview  
-|____ 5.1.1: Command-line arguments  
-|____ 5.1.2: Example program calls  
-|__ 5.2: Running simulations over multiple gradients (run-multiple-gradients.py)  
-|____ 5.2.0: Overview  
-|____ 5.2.1: Command-line arguments  
-|____ 5.2.2: Example program calls  
-|__ 5.3: Refining ranges (refine-ranges.py)  
-|____ 5.3.0: Overview  
-|____ 5.3.1: Command-line arguments  
-|____ 5.3.2: Example program calls  
-|__ 5.4: Plotting oscillation features (plot-features.py)  
-|____ 5.4.0: Overview  
-|____ 5.4.1: Command-line arguments  
-|____ 5.4.2: Example program calls  
-|__ 5.5: Plotting synchronization (plot-synchronization.py)  
-|____ 5.5.0: Overview  
-|____ 5.5.1: Command-line arguments  
-|____ 5.5.2: Example program calls  
-|__ 5.6: Plotting cells over time (plot-cells.py)  
-|____ 5.6.0: Overview  
-|____ 5.6.1: Command-line arguments  
-|____ 5.6.2: Example program calls  
-|__ 5.7: Plotting sensitivity analysis (plot-sensitivities.py)  
-|____ 5.7.0: Overview  
-|____ 5.7.1: Command-line arguments  
-|____ 5.7.2: Example program calls  
-|__ 5.8: Plotting densities (plot-densities.py)  
-|____ 5.8.0: Overview  
-|____ 5.8.1: Command-line arguments  
-|____ 5.8.2: Example program calls  
-|__ 5.9: Plotting tissue snapshots (plot-tissue-snapshots.py)  
-|____ 5.9.0: Overview  
-|____ 5.9.1: Command-line arguments  
-|____ 5.9.2: Example program calls  
-| 6: Debugging, profiling, and memory tracking  
-|__ 6.0: Debugging  
-|__ 6.1: Profiling  
-|__ 6.2: Memory tracking  
-| 7: Case study  
-|__ 7.0: Prerequisites  
-|__ 7.1: Find biologically realistic parameters  
-|____ 7.1.0: Find posterior parameters  
-|____ 7.1.1: Find anterior parameters  
-|__ 7.2: Perform sensitivity analysis  
-|__ 7.3: Find anterior gradients  
-|__ 7.4: Create plots  
-|__ 7.5: Create snapshots and movies  
-| 8: Authorship and licensing  
+| 0: Compatibility and system requirements
+|__ 0.0: Tested systems and portability
+|__ 0.1: MPI dependency
+|__ 0.2: SCons dependency
+|__ 0.3: Python and SciPy dependencies
+|__ 0.4: FFmpeg dependency
+| 1: Compilation
+|__ 1.0: Compiling with and without SCons
+|__ 1.1: Compilation options
+|__ 1.2: Compiling for MPI
+|__ 1.3: Random number generation discrepancies
+| 2: Running simulations
+|__ 2.0: Biological and computational description of the simulation
+|__ 2.1: Setting up a simulation
+|__ 2.2: Input and output
+|____ 2.2.0: Methods of input
+|____ 2.2.1: Parameter sets
+|____ 2.2.2: Perturbations and gradients
+|____ 2.2.3: Command-line arguments
+|____ 2.2.4: Input file formats
+|______ 2.2.4.0: Parameter sets format
+|______ 2.2.4.1: Perturbations format
+|______ 2.2.4.2: Gradients format
+|______ 2.2.4.3: Ranges format
+|____ 2.2.5: Output file formats
+|______ 2.2.5.0: Passed sets format
+|______ 2.2.5.1: Concentrations text format
+|______ 2.2.5.2: Concentrations binary format
+|______ 2.2.5.3: Oscillation features format
+|______ 2.2.5.4: Conditions format
+|______ 2.2.5.5: Scores format
+|______ 2.2.5.6: Seeds format
+|____ 2.2.6: Piping in parameter sets from other applications
+|____ 2.2.7: Generating random parameter sets
+|__ 2.3: Modifying the code
+|____ 2.3.0: Adding command-line arguments
+|____ 2.3.1: Adding input and output files
+|______ 2.3.1.0: Input files
+|______ 2.3.1.1: Output files
+|____ 2.3.2: Adding mutants
+|____ 2.3.3: Adding genes
+|____ 2.3.5: Other modifications
+| 3: Finding parameter sets with SRES
+|__ 3.0: How SRES finds parameters
+|____ 3.0.0: How evolutionary algorithms work
+|____ 3.0.1: How SRES works
+|____ 3.0.2: How SRES-gradients works
+|__ 3.1: Setting up SRES
+|____ 3.1.0: Searching for parameters
+|____ 3.1.1: Searching for gradients
+|____ 3.1.2: Using MPI
+|__ 3.2: Input and output
+|____ 3.2.0: Methods of input
+|____ 3.2.1: Ranges
+|____ 3.2.2: Simulation calls
+|____ 3.2.3: Command-line arguments
+|____ 3.2.4: Input file formats
+|____ 3.2.5: Output file formats
+|__ 3.3: Modifying the code
+|____ 3.3.0: Adding command-line arguments
+|____ 3.3.1: Changing which arguments SRES sends to simulations
+|____ 3.3.2: Adding input and output files
+|____ 3.3.3: Modifying libSRES
+|____ 3.3.4: Other modifications
+| 4: Performing sensitivity analysis
+|__ 4.0: Overview
+|____ 4.0.0. Overview of Local Sensitivity Analysis
+|____ 4.0.1. Overview of the program
+|__ 4.1: Using sensitivity
+|____ 4.1.0. Command-line arguments
+|____ 4.1.1: Input file format
+|____ 4.1.2: Simulation output file format
+|____ 4.1.3: Sensitivity output file format
+|____ 4.1.4: Example program call
+|__ 4.2: Modifying the code
+|____ 4.2.0: Adding command-line arguments
+|____ 4.2.1: Modifying the simulation program
+| 5: Analysis and parsing scripts
+|__ 5.0: Running simulations over multiple seeds (run-multiple-seeds.py)
+|____ 5.0.0: Overview
+|____ 5.0.1: Command-line arguments
+|____ 5.0.2: Example program calls
+|__ 5.1: Checking robustness (check-robustness.py)
+|____ 5.1.0: Overview
+|____ 5.1.1: Command-line arguments
+|____ 5.1.2: Example program calls
+|__ 5.2: Running simulations over multiple gradients (run-multiple-gradients.py)
+|____ 5.2.0: Overview
+|____ 5.2.1: Command-line arguments
+|____ 5.2.2: Example program calls
+|__ 5.3: Refining ranges (refine-ranges.py)
+|____ 5.3.0: Overview
+|____ 5.3.1: Command-line arguments
+|____ 5.3.2: Example program calls
+|__ 5.4: Plotting oscillation features (plot-features.py)
+|____ 5.4.0: Overview
+|____ 5.4.1: Command-line arguments
+|____ 5.4.2: Example program calls
+|__ 5.5: Plotting synchronization (plot-synchronization.py)
+|____ 5.5.0: Overview
+|____ 5.5.1: Command-line arguments
+|____ 5.5.2: Example program calls
+|__ 5.6: Plotting cells over time (plot-cells.py)
+|____ 5.6.0: Overview
+|____ 5.6.1: Command-line arguments
+|____ 5.6.2: Example program calls
+|__ 5.7: Plotting sensitivity analysis (plot-sensitivities.py)
+|____ 5.7.0: Overview
+|____ 5.7.1: Command-line arguments
+|____ 5.7.2: Example program calls
+|__ 5.8: Plotting densities (plot-densities.py)
+|____ 5.8.0: Overview
+|____ 5.8.1: Command-line arguments
+|____ 5.8.2: Example program calls
+|__ 5.9: Plotting tissue snapshots (plot-tissue-snapshots.py)
+|____ 5.9.0: Overview
+|____ 5.9.1: Command-line arguments
+|____ 5.9.2: Example program calls
+| 6: Debugging, profiling, and memory tracking
+|__ 6.0: Debugging
+|__ 6.1: Profiling
+|__ 6.2: Memory tracking
+| 7: Case study
+|__ 7.0: Prerequisites
+|__ 7.1: Find biologically realistic parameters
+|____ 7.1.0: Find posterior parameters
+|____ 7.1.1: Find anterior parameters
+|__ 7.2: Perform sensitivity analysis
+|__ 7.3: Find anterior gradients
+|__ 7.4: Create plots
+|__ 7.5: Create snapshots and movies
+| 8: Authorship and licensing
 
 0: Compatibility and system requirements
 ----------------------------------------
@@ -354,9 +354,9 @@ A passed sets file consists of a list of parameter sets. Its format is identical
 
 Concentrations are stored as text unless the -B or --binary-cons-output option is specified via the command-line. This section explains the text format; the binary format is explained in Section 2.2.5.2. Text files end with ".cons" while binary files end with ".bcons". Text files are easily readable by humans but take twice as many bytes to store (and therefore more time to read and write) as their binary equivalents.
 
-A concentrations file is stored in the directory given by -D or --directory-path in a subdirectory named for the mutant its results come from. Its name is "set\_?" where X is the parameter set index its results come from. For example, concentrations from the third set's Her1 mutant run with "-D cons" are stored in "cons/her1/set_2.cons" since parameter set indices are zero based.
+A concentrations file is stored in the directory given by -D or --directory-path in a subdirectory named for the mutant its results come from. Its name is "set_?" where X is the parameter set index its results come from. For example, concentrations from the third set's Her1 mutant run with "-D cons" are stored in "cons/her1/set_2.cons" since parameter set indices are zero based.
 
-The first line of the file contains the simulation's tissue width and height separated by a space. Each following line starts with the time step it represents followed by each cell's concentration value at that time, each value separated by a space. Which concentration value is printed depends on the mutant; most mutants print _her1_ mRNA but any mutant can print any concentration by editing its print_con property in the create\_mutant\_data function in source/init.cpp. Cell indices that represent cells not yet grown receive concentrations of 0 every time step until they are created.
+The first line of the file contains the simulation's tissue width and height separated by a space. Each following line starts with the time step it represents followed by each cell's concentration value at that time, each value separated by a space. Which concentration value is printed depends on the mutant; most mutants print _her1_ mRNA but any mutant can print any concentration by editing its print_con property in the create_mutant_data function in source/init.cpp. Cell indices that represent cells not yet grown receive concentrations of 0 every time step until they are created.
 
 If the small and big granularities (specified via the command-line with -g or --small-granularity and -b or --big-granularity, respectively) are equal, as they are by default, then the concentrations file prints every time step simulated. If the big granularity is larger than the small granularity, every X time steps are printed, where X is the big granularity over the small granularity.
 
@@ -365,9 +365,9 @@ If the small and big granularities (specified via the command-line with -g or --
 
 Concentrations are stored as text unless the -B or --binary-cons-output option is specified via the command-line. This section explains the binary format; the text format is explained in Section 2.2.5.1. Text files end with ".cons" while binary files end with ".bcons".
 
-A concentrations file is stored in the directory given by -D or --directory-path in a subdirectory named for the mutant its results come from. Its name is "set\_?" where X is the parameter set index its results come from. For example, concentrations from the third set's Her1 mutant run with "-D cons" are stored in "cons/her1/set_2.bcons" since parameter set indices are zero based.
+A concentrations file is stored in the directory given by -D or --directory-path in a subdirectory named for the mutant its results come from. Its name is "set_?" where X is the parameter set index its results come from. For example, concentrations from the third set's Her1 mutant run with "-D cons" are stored in "cons/her1/set_2.bcons" since parameter set indices are zero based.
 
-The first values in the file are ints that equal the simulation's tissue width and height. These ints are adjacent in memory. Each following set of values starts with the time step it represents followed by each cell's concentration value at that time, with the time step stored as an int and each concentration as a float. Which concentration value is printed depends on the mutant; most mutants print _her1_ mRNA but any mutant can print any concentration by editing its print_con property in the create\_mutant\_data function in source/init.cpp. Cell indices that represent cells not yet grown receive concentrations of 0 every time step until they are created. Time steps and their associated concentrations are grouped in the file based on the tissue size. For example, if the tissue is 6x4 cells then each group consists of (1 * sizeof(int) + 6 * 4 * sizeof(float)) = 100B on a 64-bit machine.
+The first values in the file are ints that equal the simulation's tissue width and height. These ints are adjacent in memory. Each following set of values starts with the time step it represents followed by each cell's concentration value at that time, with the time step stored as an int and each concentration as a float. Which concentration value is printed depends on the mutant; most mutants print _her1_ mRNA but any mutant can print any concentration by editing its print_con property in the create_mutant_data function in source/init.cpp. Cell indices that represent cells not yet grown receive concentrations of 0 every time step until they are created. Time steps and their associated concentrations are grouped in the file based on the tissue size. For example, if the tissue is 6x4 cells then each group consists of (1 * sizeof(int) + 6 * 4 * sizeof(float)) = 100B on a 64-bit machine.
 
 If the small and big granularities (specified via the command-line with -g or --small-granularity and -b or --big-granularity, respectively) are equal, as they are by default, then the concentrations file prints every time step simulated. If the big granularity is larger than the small granularity, every X time steps are printed, where X is the big granularity over the small granularity.
 
@@ -415,50 +415,50 @@ While the program is designed to be flexible and easily configurable, it is impo
 
 Adding a command-line argument requires changing the following structs/functions/macros:
 * In source/structs.hpp:
-  * input\_params
+  * input_params
 * In source/main.cpp:
   * usage
 * In source/init.cpp:
-  * accept\_input\_params
-  * check\_input\_params
+  * accept_input_params
+  * check_input_params
 
 In _usage_, the command-line argument should be added to the usage message. Its short and long form, data type, and description should be included in this message.
 
-In the _input\_params_ struct, a variable to store the argument's value should be added. Some arguments may need more than one variable to store their functionality. For example, input and output files store the name of the file and whether or not the file should be read from / written to.
+In the _input_params_ struct, a variable to store the argument's value should be added. Some arguments may need more than one variable to store their functionality. For example, input and output files store the name of the file and whether or not the file should be read from / written to.
 
-In _accept\_input\_params_, the argument should be added in the same format the other arguments are. The existence and/or value of the argument should be stored in the _input\_params_ struct variable mentioned above. Note that arguments requiring an option and value (e.g. --params-file input.params) should include a call to _ensure\_empty_ to avoid trying to read a nonexistent value and arguments that should not have a value (e.g. --no-color) should decrement the loop variable, _i_, to avoid off-by-one errors. Look at how other arguments are accepted before adding your own to see if you can reuse existing functionality (e.g. _store\_filename_ to store a filename).
+In _accept_input_params_, the argument should be added in the same format the other arguments are. The existence and/or value of the argument should be stored in the _input_params_ struct variable mentioned above. Note that arguments requiring an option and value (e.g. --params-file input.params) should include a call to _ensure_empty_ to avoid trying to read a nonexistent value and arguments that should not have a value (e.g. --no-color) should decrement the loop variable, _i_, to avoid off-by-one errors. Look at how other arguments are accepted before adding your own to see if you can reuse existing functionality (e.g. _store_filename_ to store a filename).
 
-To perform checks that require knowing every given argument and to avoid bloating _accept\_input\_params_, semantic checks on arguments should be placed in _check\_input\_params_. In other words, making sure an argument is an integer is an easily done type check and can be placed in _accept\_input\_params_. However, making sure the argument is between a certain range or satisfies some property can be more verbose and should be placed in _check\_input\_params_. Additionally, if checking the argument's validity requires knowing if another argument was entered, the check cannot be done in _accept\_input\_params_ because arguments can be entered in any order. Checking in _check\_input\_params_ ensures that every argument has been received.
+To perform checks that require knowing every given argument and to avoid bloating _accept_input_params_, semantic checks on arguments should be placed in _check_input_params_. In other words, making sure an argument is an integer is an easily done type check and can be placed in _accept_input_params_. However, making sure the argument is between a certain range or satisfies some property can be more verbose and should be placed in _check_input_params_. Additionally, if checking the argument's validity requires knowing if another argument was entered, the check cannot be done in _accept_input_params_ because arguments can be entered in any order. Checking in _check_input_params_ ensures that every argument has been received.
 
-If the command-line argument affects other parts of the program then those parts must obviously be changed as well. If your command-line argument affects biological aspects of the code (i.e. something in source/sim.cpp) then it is usually easier to copy the value over to the _sim\_data_ struct in source/structs.hpp via its constructor since _sim\_data_ is passed into most areas of the simulation while _input\_params_ is used only in initialization, I/O, etc.
+If the command-line argument affects other parts of the program then those parts must obviously be changed as well. If your command-line argument affects biological aspects of the code (i.e. something in source/sim.cpp) then it is usually easier to copy the value over to the _sim_data_ struct in source/structs.hpp via its constructor since _sim_data_ is passed into most areas of the simulation while _input_params_ is used only in initialization, I/O, etc.
 
 ****************************************
 **2.3.1: Adding input and output files**
 
 Adding an input file requires changing the following structs/functions/macros:
 * In source/structs.hpp:
-  * input\_params
+  * input_params
 * In source/main.cpp:
   * main
 * In source/init.cpp:
-  * accept\_input\_params
-  * check\_input\_params
+  * accept_input_params
+  * check_input_params
 
-Input and output files should not be hard-coded into the program; they should be added via a command-line argument (see Section 2.3.0 for how to do this). After an argument to read from / write to the file is added (requiring changes to the _input\_params_ struct, _accept\_input\_params_, and _check\_input\_params_), one variable and two functions must be added.
+Input and output files should not be hard-coded into the program; they should be added via a command-line argument (see Section 2.3.0 for how to do this). After an argument to read from / write to the file is added (requiring changes to the _input_params_ struct, _accept_input_params_, and _check_input_params_), one variable and two functions must be added.
 
 ************************
 **2.3.1.0: Input files**
 
-For input files, an _input\_data_ struct instance that accepts the _input\_params_ filename should be added to main where the rest of the instances are located. A _read\_X\_file_ function must be added to source/init.cpp, where X is what kind of file is being read (e.g. parameters, perturbations, etc.). Its header must be added to source/init.hpp. This function is usually a thin wrapper for the _read\_file_ function that opens the file and copies its contents to the given _input\_data_ struct. Always include a check in this function to ensure the user wants this file printed (other _read\_X\_file_ functions reference a boolean stored in the _input\_params_ struct indicating whether or not the file was specified via the command-line). A call to this _read\_X\_file_ function should be added in main where the rest of the files are read.
+For input files, an _input_data_ struct instance that accepts the _input_params_ filename should be added to main where the rest of the instances are located. A _read_X_file_ function must be added to source/init.cpp, where X is what kind of file is being read (e.g. parameters, perturbations, etc.). Its header must be added to source/init.hpp. This function is usually a thin wrapper for the _read_file_ function that opens the file and copies its contents to the given _input_data_ struct. Always include a check in this function to ensure the user wants this file printed (other _read_X_file_ functions reference a boolean stored in the _input_params_ struct indicating whether or not the file was specified via the command-line). A call to this _read_X_file_ function should be added in main where the rest of the files are read.
 
-Additionally, a _fill\_X_ function must be added to source/init.cpp, where X is what kind of data the file supplies (e.g. parameters, perturbations, etc.). Its header must be added to source/init.hpp. This file accepts a previously filled _input\_data_ struct and parses its contents into useful information. How this is done is up to you, of course, but there are numerous functions with similar purposes from which to take code and ideas. A call to this _fill\_X_ function should be added in main where the rest of the files are parsed.
+Additionally, a _fill_X_ function must be added to source/init.cpp, where X is what kind of data the file supplies (e.g. parameters, perturbations, etc.). Its header must be added to source/init.hpp. This file accepts a previously filled _input_data_ struct and parses its contents into useful information. How this is done is up to you, of course, but there are numerous functions with similar purposes from which to take code and ideas. A call to this _fill_X_ function should be added in main where the rest of the files are parsed.
 
 *************************
 **2.3.1.1: Output files**
 
-For output files, an _ofstream_ instance should be added to main where the rest of the output files are initialized. It should be initialized by a call to _create\_X\_file_, where X is what kind of file is being created. _create\_X\_file_ must be added to source/init.cpp. Its header must be added to source/init.hpp. This file should create the output file stream on the heap with "new ofstream()", open the file for writing with a call to _open\_file_, and print any header information the file should include. There are numerous functions with similar purposes from which to take code and ideas.
+For output files, an _ofstream_ instance should be added to main where the rest of the output files are initialized. It should be initialized by a call to _create_X_file_, where X is what kind of file is being created. _create_X_file_ must be added to source/init.cpp. Its header must be added to source/init.hpp. This file should create the output file stream on the heap with "new ofstream()", open the file for writing with a call to _open_file_, and print any header information the file should include. There are numerous functions with similar purposes from which to take code and ideas.
 
-A call to _delete\_file_ should be added to main where the rest of the output files are deleted. _delete\_file_ closes the file and frees its associated stream from memory.
+A call to _delete_file_ should be added to main where the rest of the output files are deleted. _delete_file_ closes the file and frees its associated stream from memory.
 
 *************************
 **2.3.2: Adding mutants**
@@ -467,11 +467,11 @@ Adding a mutant requires changing the following structs/functions/macros:
 * In source/macros.hpp:
   * mutant macros
 * In source/init.cpp:
-  * create\_mutant\_data
+  * create_mutant_data
 
-To add a mutant, its name must be added to the list of mutants in source/macros.hpp. It must be given a unique index and the _NUM\_MUTANTS_ macro must be incremented. Its data should be added to _create\_mutant\_data_ in the same way other mutants' data are. If the new mutant has more conditions than allowed by a _MAX\_CONDS\_X_ macro, where X is POST, ANT, or WAVE, then the corresponding macro should be incremented to fit the new number of conditions for that section. If the exact format of the existing mutants in _create\_mutant\_data_ is copied for the new mutant then this is the only function requiring modification.
+To add a mutant, its name must be added to the list of mutants in source/macros.hpp. It must be given a unique index and the _NUM_MUTANTS_ macro must be incremented. Its data should be added to _create_mutant_data_ in the same way other mutants' data are. If the new mutant has more conditions than allowed by a _MAX_CONDS_X_ macro, where X is POST, ANT, or WAVE, then the corresponding macro should be incremented to fit the new number of conditions for that section. If the exact format of the existing mutants in _create_mutant_data_ is copied for the new mutant then this is the only function requiring modification.
 
-Each mutant has functions that test the conditions for each section (posterior, anterior, sometimes wave). These functions are located in source/tests.cpp. Copy the format of other mutants' tests for the new mutant and be sure to reference the new functions in the mutant's section in _create\_mutant\_data_.
+Each mutant has functions that test the conditions for each section (posterior, anterior, sometimes wave). These functions are located in source/tests.cpp. Copy the format of other mutants' tests for the new mutant and be sure to reference the new functions in the mutant's section in _create_mutant_data_.
 
 ***********************
 **2.3.3: Adding genes**
@@ -482,22 +482,22 @@ Adding a gene requires changing the following structs/functions/macros:
   * rate macros
   * index macros
 * In source/sim.cpp:
-  * protein\_synthesis
-  * dimer\_proteins
-  * mRNA\_synthesis
+  * protein_synthesis
+  * dimer_proteins
+  * mRNA_synthesis
   * transcription
 
-To add a gene, macros for its associated concentration levels, rates, and indices must be added to soure/macros.hpp. Indices for its mRNA, protein, and dimer concentration levels should be added where the rest of the genes' are. Make sure _NUM\_CON\_LEVELS_, _NUM\_CON\_STORE_, _MIN\_CON\_LEVEL_, and _MAX\_CON\_LEVEL_ are updated accordingly. If a gene's mRNA needs to be analyzed for oscillation features, NUM\_CON\_STORE should be incremented to fit it. If rates are added or changed, ensure that _MIN\_DELAY_ and _MAX\_DELAY_ are still accurate.
+To add a gene, macros for its associated concentration levels, rates, and indices must be added to soure/macros.hpp. Indices for its mRNA, protein, and dimer concentration levels should be added where the rest of the genes' are. Make sure _NUM_CON_LEVELS_, _NUM_CON_STORE_, _MIN_CON_LEVEL_, and _MAX_CON_LEVEL_ are updated accordingly. If a gene's mRNA needs to be analyzed for oscillation features, NUM_CON_STORE should be incremented to fit it. If rates are added or changed, ensure that _MIN_DELAY_ and _MAX_DELAY_ are still accurate.
 
 Additionally, indices for its mRNA synthesis, mRNA degradation, protein synthesis, protein degradation, dimer associations, dimer dissociations, dimer degradations, mRNA transcription delay, protein translation delay, and (if biologically appropriate) critical number of protein molecules to inhibit mRNA transcription must be added where the rest of the genes' are.
 
-Indices for calculations involving the new gene's mRNA and protein concentrations must also be added where the rest of the genes' are. If the gene behaves like the existing Her genes then it should be given a her gene index and _NUM\_HER\_INDICES_ should be incremented. If it needs to calculate its neighbors' Delta protein concentrations then its index should be lower than the genes' indices that don't need to calculate them and _NUM\_DD\_INDICES_ should be incremented.
+Indices for calculations involving the new gene's mRNA and protein concentrations must also be added where the rest of the genes' are. If the gene behaves like the existing Her genes then it should be given a her gene index and _NUM_HER_INDICES_ should be incremented. If it needs to calculate its neighbors' Delta protein concentrations then its index should be lower than the genes' indices that don't need to calculate them and _NUM_DD_INDICES_ should be incremented.
 
-The structure of _protein\_synthesis_ is highly dependent on which genes are added to the simulation. A gene that dimerizes with other genes in the system (as of now the Her genes) must call _dim\_int_ for each heterodimer and then _con\_protein\_her_, both in source/sim.cpp, to complete the calculations. Each gene that dimerizes with the new gene must also add a call to _dim\_int_ for their own calculations. If the gene does not dimerize then it should call only _con\_protein\_delta_. A gene that does not fit either the Her or Delta class of genes must have its own calculation functions.
+The structure of _protein_synthesis_ is highly dependent on which genes are added to the simulation. A gene that dimerizes with other genes in the system (as of now the Her genes) must call _dim_int_ for each heterodimer and then _con_protein_her_, both in source/sim.cpp, to complete the calculations. Each gene that dimerizes with the new gene must also add a call to _dim_int_ for their own calculations. If the gene does not dimerize then it should call only _con_protein_delta_. A gene that does not fit either the Her or Delta class of genes must have its own calculation functions.
 
-The structure of _dimer\_proteins_ is also highly dependent on which genes are added. However, the calculations are more straightforward; _con\_dimer_ must be called for every dimer concentration. Note that, for example, Her1Her7 is the same dimer as Her7Her1 and should not be calculated twice.
+The structure of _dimer_proteins_ is also highly dependent on which genes are added. However, the calculations are more straightforward; _con_dimer_ must be called for every dimer concentration. Note that, for example, Her1Her7 is the same dimer as Her7Her1 and should not be calculated twice.
 
-_mRNA\_synthesis_ has very specific functionality and should be carefully analyzed to ensure biological accuracy. Genes whose concentration calculations require its neighbors' Delta protein concentrations should be included in set of genes defined by the _NUM\_DD\_INDICES_ macro, explained above. The final loop of the function that calculates the concentration values performs different behavior for different mRNA concentrations and may need to be modified if the gene being added demonstrates unique behavior.
+_mRNA_synthesis_ has very specific functionality and should be carefully analyzed to ensure biological accuracy. Genes whose concentration calculations require its neighbors' Delta protein concentrations should be included in set of genes defined by the _NUM_DD_INDICES_ macro, explained above. The final loop of the function that calculates the concentration values performs different behavior for different mRNA concentrations and may need to be modified if the gene being added demonstrates unique behavior.
 
 If the gene being added forms dimers that inhibit _her1_ and _her7_ transcription (like Her1Her1, Her7Her13, etc. do), the gene's relevant dimers need to be added to the calculations in _transcription_ in the same way every other inhibiting dimer is.
 
@@ -660,12 +660,12 @@ While the program and the library it is based on, libSRES, are designed to be fl
 
 Adding a command-line argument requires changing the following structs/functions/macros:
 * In source/structs.hpp:
-  * input\_params
+  * input_params
 * In source/main.cpp:
   * usage
 * In source/init.cpp:
-  * accept\_input\_params
-  * check\_input\_params
+  * accept_input_params
+  * check_input_params
 
 Because adding a command-line argument to SRES is virtually identical to adding one to the simulation, see Section 2.3.0 for details. The only difference is that because libSRES, the library SRES uses, contains an intricate hierarchy of functions that are not easily configurable, it is impractical to pass data specified by the user into the actual library code and thus into the simulation calls. Therefore, the input_params struct has been made global so that the simulation calling code can access it. While global variables are obviously dangerous and discouraged, this seems to be the simplest solution and should be kept in mind when adding command-line arguments.
 
@@ -674,34 +674,34 @@ Because adding a command-line argument to SRES is virtually identical to adding 
 
 Changing a simulation argument requires changing the following structs/functions/macros:
 * In source/macros.hpp:
-  * NUM\_IMPLICIT\_SIM\_ARGS
+  * NUM_IMPLICIT_SIM_ARGS
 * In source/init.cpp:
-  * init\_sim\_args
+  * init_sim_args
 * In source/io.cpp:
-  * simulate\_set
+  * simulate_set
 
-To change an implicit simulation argument, the macro _NUM\_IMPLICIT\_SIM\_ARGS_ must be changed to accomodate the change in arguments. Its current value is 6: the first argument must be the program name, specifying the two pipes takes 4 arguments, and there must be a NULL terminator to mark the end of the array. When changing the arguments, remember that an argument option that takes a value requires 2 arguments, not 1.
+To change an implicit simulation argument, the macro _NUM_IMPLICIT_SIM_ARGS_ must be changed to accomodate the change in arguments. Its current value is 6: the first argument must be the program name, specifying the two pipes takes 4 arguments, and there must be a NULL terminator to mark the end of the array. When changing the arguments, remember that an argument option that takes a value requires 2 arguments, not 1.
 
-The implicit arguments are initialized in _init\_sim\_args_. Note that every string in the argument array is freed so constant strings must be copied onto the heap with _copy\_str_. Follow the format of the existing implicit arguments when adding more. Because each simulation needs unique pipe file descriptors, each simulation gets its own copy of the simulation arguments, copied in _simulate\_set_. Arguments that must be unique per simulation must be initialized in _simulate\_set_, not _init\_sim\_args_.
+The implicit arguments are initialized in _init_sim_args_. Note that every string in the argument array is freed so constant strings must be copied onto the heap with _copy_str_. Follow the format of the existing implicit arguments when adding more. Because each simulation needs unique pipe file descriptors, each simulation gets its own copy of the simulation arguments, copied in _simulate_set_. Arguments that must be unique per simulation must be initialized in _simulate_set_, not _init_sim_args_.
 
 ****************************************
 **3.3.2: Adding input and output files**
 
 Adding an input file requires changing the following structs/functions/macros:
 * In source/structs.hpp:
-  * input\_params
+  * input_params
 * In source/main.cpp:
   * main
 * In source/init.cpp:
-  * accept\_input\_params
-  * check\_input\_params
+  * accept_input_params
+  * check_input_params
 
 Because adding an input or output file to SRES is virtually identical to adding one to the simulation, see Section 2.3.1 for details.
 
 ****************************
 **3.3.3: Modifying libSRES**
 
-Modifying libSRES is feasible but discouraged. Mostly this is because it works very well as is. However, we have made modifications (specifically to the terminal output format and memory tracking) with few complications. The only inconvenient aspect is that because of the intricate hierarchy of functions, it is impractical to pass data to certain areas of the code. We made the _input\_params_ struct to get around this so consider adding variables required by simulation calls to the struct if possible. Make sure to read all of the code before modifying any to account for unexpected dependencies.
+Modifying libSRES is feasible but discouraged. Mostly this is because it works very well as is. However, we have made modifications (specifically to the terminal output format and memory tracking) with few complications. The only inconvenient aspect is that because of the intricate hierarchy of functions, it is impractical to pass data to certain areas of the code. We made the _input_params_ struct to get around this so consider adding variables required by simulation calls to the struct if possible. Make sure to read all of the code before modifying any to account for unexpected dependencies.
 
 ******************************
 **3.3.4: Other modifications**
@@ -718,7 +718,7 @@ We apologize if instructions on how to make your desired changes are not include
 
 The goal of Local Sensitivity Analysis is to quantify the degree to which a simulation is influenced by an input parameter. 
 
-If Y is the output function (amplitude, period, etc), p\_j is the j’th parameter, and p’ is the nominal parameter set, then non-dimensional sensitivity S\_j can be evaluated by:
+If Y is the output function (amplitude, period, etc), p_j is the j’th parameter, and p’ is the nominal parameter set, then non-dimensional sensitivity S_j can be evaluated by:
 
 ```
 S_j = (p’_j/Y(p’)) * (dY(p’)/dp_j)
@@ -743,13 +743,13 @@ This program accomplishes the above calculations through the following steps:
   * Based on the nominal parameter value, fill in this array.
 * Generate simulation data (e.g. oscillation features) by piping parameter sets to instances of the simulation program:
   * Send the nominal (unperturbed) set to get Y(p') as above.
-  * For each individual parameter, send the nominal parameter set with the perturbed value inserted appropriately. This would be p\_jabove.
+  * For each individual parameter, send the nominal parameter set with the perturbed value inserted appropriately. This would be p_jabove.
 * To get the absolute sensitivity for each feature (i.e. output function) returned in the simulation data, perform the following for each parameter (j):
-* Use the output values of the perturbed sets to calculate the finite difference, i.e. the derivative around the nominal parameter point (∆Y(p’)/∆p\_j above).
-* Calculate the non-dimensionalized sensitivity (S\_j above) using the finite difference and the nominal parameter value and output ( p’\_j/Y(p’) above ).
+* Use the output values of the perturbed sets to calculate the finite difference, i.e. the derivative around the nominal parameter point (∆Y(p’)/∆p_j above).
+* Calculate the non-dimensionalized sensitivity (S_j above) using the finite difference and the nominal parameter value and output ( p’_j/Y(p’) above ).
 * To get the normalized sensitivity for each feature, perform the following for each parameter (j):
-  * Sum the non-dimensionalized sensitivity of the feature with respect to all parameters, (sum\_1:m{|S\_j|} above). 
-  * Divide each parameter's sensitivity value by that sum. Optionally, multiply by 100 to give N\_j as a percentage.
+  * Sum the non-dimensionalized sensitivity of the feature with respect to all parameters, (sum_1:m{|S_j|} above). 
+  * Divide each parameter's sensitivity value by that sum. Optionally, multiply by 100 to give N_j as a percentage.
 * Write out these calculated values to files.
 
 **************************
@@ -801,7 +801,7 @@ This program reads results of simulations from the output files created by the s
 Some requirements of the simulation output file:
 
 * The number of features can be arbitrary, but:
-* The maximum number of features that can be read is set by the macro _MAX\_NUM\_FEATS_ in source/macros.hpp and is 150 by default.
+* The maximum number of features that can be read is set by the macro _MAX_NUM_FEATS_ in source/macros.hpp and is 150 by default.
 * All values must be comma-seperated with no spaces.
 * The names line must contain a name for every feature.
 * The last value in non-name lines must be followed by a comma, but can have any string after that before the new line.
@@ -818,7 +818,7 @@ set,post sync wildtype,post per wildtype,post amp wildtype,post per wildtype/wt,
 **********************************
 **4.1.3: Sensitivity output file format**
 
-The final output of the sensitivity calculation comes in two files with the same format. Both files are stored in a directory that is by default named "SA-data/" though this can be modified with the commands '-d' or '--sense-dir'. In this directory there will be two files for every nominal set that was sent to the sensitivity program: "LSA\_n" and "normalized\_n" where "_n" refers to the nth nominal sent. The former file contains the absolute, dimensionless sensitivity values while the latter contains the normalized sensitivities as percentages (S\_j and N\_j as described in section 2.0). 
+The final output of the sensitivity calculation comes in two files with the same format. Both files are stored in a directory that is by default named "SA-data/" though this can be modified with the commands '-d' or '--sense-dir'. In this directory there will be two files for every nominal set that was sent to the sensitivity program: "LSA_n" and "normalized_n" where "_n" refers to the nth nominal sent. The former file contains the absolute, dimensionless sensitivity values while the latter contains the normalized sensitivities as percentages (S_j and N_j as described in section 2.0). 
 
 The format of these files is consistent with the format of the simulation output file format, with the sensitivity/normalized-senstivity values in place of the original feature values. The one difference is that the first column will refer to which parameter the sensitiviy value is for. 
 
@@ -884,7 +884,7 @@ If you would like to add a comand-line argument to the senstivity program simply
 
 You should replace 'your-option' with the command you would like to add and '?' with a single-character short version. Please ensure that these strings are unique, i.e. they do not conflict with any previously assigned commands. Please do not ovewrite the default commands.
 
-You should also replace 'your\_variable' with the variable/object you would like to use to store the value passed as an argument. The most convenient method of passing this variable throughout the program is by making it an instance variable of the input\_params struct. To do this, simply open 'sensitivity-analysis/source/init.hpp' and add your instance variable to the input\_params struct. You may also want to set a default value for you variable, in which case you should add this assignment to the input_params constructor and destrctor. For example:
+You should also replace 'your_variable' with the variable/object you would like to use to store the value passed as an argument. The most convenient method of passing this variable throughout the program is by making it an instance variable of the input_params struct. To do this, simply open 'sensitivity-analysis/source/init.hpp' and add your instance variable to the input_params struct. You may also want to set a default value for you variable, in which case you should add this assignment to the input_params constructor and destrctor. For example:
 
 ```
 struct input_params{
@@ -928,16 +928,16 @@ If you are willing to modify the source code of 'sensitivity-analysis/sensitivit
 
 For changing how simulations are called:
 
-* void simulate\_samples(int, input_params&, sim_set&)
-* void simulate\_nominal(input_params&)
+* void simulate_samples(int, input_params&, sim_set&)
+* void simulate_nominal(input_params&)
 
 For changing how simulation results are read from file:
 
-* double** load\_output(int, int*, char*, char***)
+* double** load_output(int, int*, char*, char***)
 
 For changing how sensitivity calculations are written to file:
 
-* void write\_sensitivity(int, int, char **, double **, char*)
+* void write_sensitivity(int, int, char **, double **, char*)
 
 Please store a backup of the original package before any modifications and proceed with caution.
 
@@ -1069,7 +1069,7 @@ python refine-ranges.py -s good.params -c current.ranges -n new.ranges -d 2
 *******************
 **5.4.0: Overview**
 
-plot-features.py plots the period and/or amplitude change from posterior to anterior for the wildtype and every mutant. After running the simulation with the -A option, the simulation creates files in the directory specified by the -D option. These files are called set\_X\_\Y\_\Z\.feats, where X is the parameter set index, Y is the concentration for which to create plots (currently mh1 or mdelta), and Z is the oscillation feature you want to plot: "period" or "amplitude". The script can plot either the period, the amplitude or both of the features, depending on which command line arguments you provide it. You can specify from how many parameter sets you want to extract data for the plotting. The script will then divide the width of the PSM into posterior and 8 slices of the anterior. For each of these sections, the mean and standard error of the values are calculated and then plotted onto an errorbar plot. This process is repeated for all the mutants that were simulated. The command line arguments allow for more customization of the plots. If you want to change the number of data points on the graph, you should change the variable 'buckets' on line 76. 
+plot-features.py plots the period and/or amplitude change from posterior to anterior for the wildtype and every mutant. After running the simulation with the -A option, the simulation creates files in the directory specified by the -D option. These files are called set_X_\Y_\Z\.feats, where X is the parameter set index, Y is the concentration for which to create plots (currently mh1 or mdelta), and Z is the oscillation feature you want to plot: "period" or "amplitude". The script can plot either the period, the amplitude or both of the features, depending on which command line arguments you provide it. You can specify from how many parameter sets you want to extract data for the plotting. The script will then divide the width of the PSM into posterior and 8 slices of the anterior. For each of these sections, the mean and standard error of the values are calculated and then plotted onto an errorbar plot. This process is repeated for all the mutants that were simulated. The command line arguments allow for more customization of the plots. If you want to change the number of data points on the graph, you should change the variable 'buckets' on line 76. 
 
 *********************************
 **5.4.1: Command-line arguments**
@@ -1159,7 +1159,7 @@ These bar graphs display the sensitivity of a simulation output to each simulati
 3: using the average to calculating the standard error for each parameter,
 4: creating a bar graph for each simulation output in which the height of each bar is the average sensitivity to a particular input parameter accross nominal parameter sets and the error bars are the standard error values.
 
-This method will create two images for each feature: a bar graph of the normalized sensitivities and a bar graph of the absolute sensitivities. These graphs will be stored in files titled "\[feature name\].png" and "absolute\_\[feature name\].png", respectively. The feature names will come from the original simulation output data, with the exception that all special characters will be converted to underscores in the file name (though the full feature name will be used as the title on the graph, verbatim).
+This method will create two images for each feature: a bar graph of the normalized sensitivities and a bar graph of the absolute sensitivities. These graphs will be stored in files titled "\[feature name\].png" and "absolute_\[feature name\].png", respectively. The feature names will come from the original simulation output data, with the exception that all special characters will be converted to underscores in the file name (though the full feature name will be used as the title on the graph, verbatim).
 
 1: Scatter-Line plots
 
@@ -1169,7 +1169,7 @@ These are plots of points connected by lines where each line is a single nominal
 1: parsing the simulation output files, i.e. the oscillation features of the zebrafish somitogenesis simulations,
 2: For every simulation parameter, plotting the simulation output value at successive perturbations of the parameter -- each output value is plotted as the perturbed value divided by the output vale of the nominal (unperturbed) parameter set.
 
-These plots display the ratio between an simulation output value at a perturbed parameter value. This method will create an image for every parameter's effect on every simulation output feature. The files are titled "\[index of parameter\]on\[index of feature\]\_\[feature name\].png". For example, the file "10on2\_posterior\_amplitude\_wildtype.png" would refer the the effect of parameter #10 on feature #2 which is named "posterior amplitude wildtype". As before, feature names come from the original simulation output with special characters (e.g. white space) replaced with underscores.
+These plots display the ratio between an simulation output value at a perturbed parameter value. This method will create an image for every parameter's effect on every simulation output feature. The files are titled "\[index of parameter\]on\[index of feature\]_\[feature name\].png". For example, the file "10on2_posterior_amplitude_wildtype.png" would refer the the effect of parameter #10 on feature #2 which is named "posterior amplitude wildtype". As before, feature names come from the original simulation output with special characters (e.g. white space) replaced with underscores.
 
 *********************************
 **5.7.1: Command-line arguments**
@@ -1292,11 +1292,11 @@ Simulations take time and identifying performance bottlenecks can save you days 
 ************************
 **6.2: Memory tracking**
 
-While SRES and sensitivity analysis require less than a megabyte of memory, the simulation can take gigabytes given a large enough cell tissue and number of genes. While manually adding up the memory requirements of the largest data structure used can give a broad estimate of the memory footprint, having a more exact number can be important, especially in the context of clusters with limited memory and long submission queues. To achieve this, all programs in this package can be compiled with memory tracking (see Section 1 for compilation instructions). The memory tracker is a very basic but easy way to calculate memory usage on the fly. Compiling with it adds a _print\_heap\_usage_ function that can be called at any time. This function reports the current heap usage, which is the sum of allocations not yet deallocated, and the total heap usage, which is the sum of all allocations regardless of deallocations.
+While SRES and sensitivity analysis require less than a megabyte of memory, the simulation can take gigabytes given a large enough cell tissue and number of genes. While manually adding up the memory requirements of the largest data structure used can give a broad estimate of the memory footprint, having a more exact number can be important, especially in the context of clusters with limited memory and long submission queues. To achieve this, all programs in this package can be compiled with memory tracking (see Section 1 for compilation instructions). The memory tracker is a very basic but easy way to calculate memory usage on the fly. Compiling with it adds a _print_heap_usage_ function that can be called at any time. This function reports the current heap usage, which is the sum of allocations not yet deallocated, and the total heap usage, which is the sum of all allocations regardless of deallocations.
 
-For the memory tracker to work, calls to _malloc_ must be replaced with calls to _mallocate_ and calls to _free_ with calls to _mfree_. _new_, _new[]_, _delete_, and _delete[]_ are automatically overrided. The memory tracker adds a small amount of memory to the heap but this is not included in the messages of _print\_heap\_usage_. Because _malloc_ introduces overhead for each allocation and often allocates slightly more than needed for technical reasons, the memory tracker may report a slightly smaller footprint than is actually the case but the difference is very small.
+For the memory tracker to work, calls to _malloc_ must be replaced with calls to _mallocate_ and calls to _free_ with calls to _mfree_. _new_, _new[]_, _delete_, and _delete[]_ are automatically overrided. The memory tracker adds a small amount of memory to the heap but this is not included in the messages of _print_heap_usage_. Because _malloc_ introduces overhead for each allocation and often allocates slightly more than needed for technical reasons, the memory tracker may report a slightly smaller footprint than is actually the case but the difference is very small.
 
-Note that _malloc_ is not the only function that allocates memory on the heap so if modifications use other functions like _calloc_, _realloc_, or _strdup_, those functions also require wrappers to work properly with the memory tracker. Wrappers for _calloc_ and _realloc_ can be found in SRES's source/memory.cpp. _copy\_str_, found in each program's source/init.cpp, serves as a comparable equivalent to _strdup_.
+Note that _malloc_ is not the only function that allocates memory on the heap so if modifications use other functions like _calloc_, _realloc_, or _strdup_, those functions also require wrappers to work properly with the memory tracker. Wrappers for _calloc_ and _realloc_ can be found in SRES's source/memory.cpp. _copy_str_, found in each program's source/init.cpp, serves as a comparable equivalent to _strdup_.
 
 7: Case study
 -------------
